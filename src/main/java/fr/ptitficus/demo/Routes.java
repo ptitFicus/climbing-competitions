@@ -21,6 +21,6 @@ public class Routes {
 
     @Bean
     public RouterFunction<?> routerFunction() {
-        return route(GET("/api/user").and(accept(MediaType.APPLICATION_JSON)), handler::handleHelloRequest);
+        return route(GET("/api/competitions").and(accept(MediaType.APPLICATION_JSON)), handler::handleCompetitonsRequest);
     }
 }

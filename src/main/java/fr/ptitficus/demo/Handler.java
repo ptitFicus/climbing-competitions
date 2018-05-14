@@ -8,7 +8,17 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class Handler {
+    private final CompetitionClient competitionClient;
+
+    public Handler(CompetitionClient competitionClient) {
+        this.competitionClient = competitionClient;
+    }
+
     public Mono<ServerResponse> handleHelloRequest(ServerRequest request) {
         return ServerResponse.ok().body(Mono.just("Hello World !"), String.class);
+    }
+
+    public Mono<ServerResponse> handleCompetitonsRequest(ServerRequest request) {
+        return ServerResponse.ok().body(competitionClient.getCompetitions(), Competition.class);
     }
 }
