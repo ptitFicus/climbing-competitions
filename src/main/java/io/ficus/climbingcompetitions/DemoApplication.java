@@ -1,4 +1,4 @@
-package fr.ptitficus.demo;
+package io.ficus.climbingcompetitions;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,6 +1,8 @@
-package fr.ptitficus.demo;
+package io.ficus.climbingcompetitions.api.controller;
 
 
+import io.ficus.climbingcompetitions.client.CompetitionClient;
+import io.ficus.climbingcompetitions.domain.model.Competition;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -12,10 +14,6 @@ public class Handler {
 
     public Handler(CompetitionClient competitionClient) {
         this.competitionClient = competitionClient;
-    }
-
-    public Mono<ServerResponse> handleHelloRequest(ServerRequest request) {
-        return ServerResponse.ok().body(Mono.just("Hello World !"), String.class);
     }
 
     public Mono<ServerResponse> handleCompetitonsRequest(ServerRequest request) {

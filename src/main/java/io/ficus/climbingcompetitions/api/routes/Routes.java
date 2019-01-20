@@ -1,5 +1,6 @@
-package fr.ptitficus.demo;
+package io.ficus.climbingcompetitions.api.routes;
 
+import io.ficus.climbingcompetitions.api.controller.Handler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

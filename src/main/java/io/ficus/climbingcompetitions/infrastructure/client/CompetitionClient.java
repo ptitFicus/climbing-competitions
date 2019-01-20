@@ -1,12 +1,17 @@
-package fr.ptitficus.demo;
+package io.ficus.climbingcompetitions.infrastructure.client;
 
+import io.ficus.climbingcompetitions.domain.model.Competition;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.util.function.Tuples;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +21,7 @@ import java.util.stream.StreamSupport;
 
 @Service
 public class CompetitionClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CompetitionClient.class);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yy");
     private static final Map<String, Competition.Category> LETTER_CATEGORY = Map.of(
             "m8", Competition.Category.INF8ANS,
@@ -30,14 +36,33 @@ public class CompetitionClient {
     );
 
     public Flux<Competition> getCompetitions() {
-        return WebClient.create("https://www.ffme.fr/competition/calendrier-liste.html")
+        return WebClient.create("https://www.ffme.fr/competition/calendrier-liste.html?DISCIPLINE=ESC&CPT_FUTUR=1")
                 .get()
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(Jsoup::parse)
-                .map(this::extractCompetitions)
-                .flatMapMany(Flux::fromIterable);
+                .map(document -> Tuples.of(extractCompetitions(document), extractMaxPage(document)))
+                .flux()
+                .flatMap(tuple -> Flux.concat(Flux.fromIterable(tuple.getT1()), getRemainingCompetitions(tuple.getT2())));
     }
+
+    private Flux<Competition> getRemainingCompetitions(Integer count) {
+        // Skip first, index starts at 1
+        return Flux.range(2, count-1)
+                .flatMap(index -> {
+                    String url = "https://www.ffme.fr/competition/calendrier-liste.html?DISCIPLINE=ESC&CPT_FUTUR=1&page=" + index;
+                    LOGGER.debug("Fetching {}", url);
+                    return WebClient.create(url)
+                            .get()
+                            .retrieve()
+                            .bodyToMono(String.class)
+                            .flux();
+                })
+                .map(Jsoup::parse)
+                .map(this::extractCompetitions)
+                .flatMap(Flux::fromIterable);
+    }
+
 
     private Collection<Competition> extractCompetitions(Document document) {
         Elements trs = document.select(".infos_colonne tr");
@@ -53,18 +78,18 @@ public class CompetitionClient {
         Element categoriesCell = tr.child(3);
 
 
-        Competition comp = new Competition();
-        comp.name = nameCell.text();
+        Competition.Builder comp = Competition.newBuilder();
+        comp.withName(nameCell.text());
 
         String[] dates = dateCell.text().split(" ");
 
         LocalDate startDate = LocalDate.parse(dates[0], FORMATTER);
-        comp.startDate = startDate;
+        comp.withStartDate(startDate);
 
-        if(dates.length > 1) {
-            comp.endDate = LocalDate.parse(dates[1], FORMATTER);
+        if (dates.length > 1) {
+            comp.withEndDate(LocalDate.parse(dates[1], FORMATTER));
         } else {
-            comp.endDate = startDate;
+            comp.withEndDate(startDate);
         }
 
         Set<Competition.Category> categories = Arrays.stream(categoriesCell.text().split(" "))
@@ -72,8 +97,18 @@ public class CompetitionClient {
                 .map(letter -> LETTER_CATEGORY.getOrDefault(letter, Competition.Category.UNKNOWN_CATEGORY))
                 .collect(Collectors.toSet());
 
-        comp.categories = categories;
+        comp.withCategories(categories);
 
-        return comp;
+        return comp.build();
+    }
+
+    static Integer extractMaxPage(Document document) {
+        Elements links = document.select("#num_pages_box > a");
+        Node lastPageLink = links.last();
+        String lastPageUrl = lastPageLink.attr("href");
+        String lastPageNumber = lastPageUrl.split("page=")[1];
+        return Integer.valueOf(lastPageNumber);
+
+
     }
 }
