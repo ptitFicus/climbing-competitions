@@ -1,6 +1,7 @@
 package io.ficus.climbingcompetitions.infrastructure.client;
 
 import io.ficus.climbingcompetitions.domain.model.Competition;
+import io.ficus.climbingcompetitions.domain.model.CompetitionDetail;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +26,7 @@ import java.util.stream.StreamSupport;
 public class CompetitionClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(CompetitionClient.class);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yy");
+    private static final DateTimeFormatter DETAIL_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Map<String, Competition.Category> LETTER_CATEGORY = Map.of(
             "m8", Competition.Category.INF8ANS,
             "m", Competition.Category.MICROBE,
@@ -81,6 +85,11 @@ public class CompetitionClient {
         Competition.Builder comp = Competition.newBuilder();
         comp.withName(nameCell.text());
 
+        String url = nameCell.getElementsByTag("a").attr("href");
+        String id = url.substring(url.lastIndexOf("/") + 1).split("\\.")[0];
+        comp.withId(id);
+
+
         String[] dates = dateCell.text().split(" ");
 
         LocalDate startDate = LocalDate.parse(dates[0], FORMATTER);
@@ -108,7 +117,50 @@ public class CompetitionClient {
         String lastPageUrl = lastPageLink.attr("href");
         String lastPageNumber = lastPageUrl.split("page=")[1];
         return Integer.valueOf(lastPageNumber);
+    }
 
+    public static Mono<CompetitionDetail> getDetail(String id) {
+        return WebClient.create("https://www.ffme.fr/competition/fiche/" + id + ".html")
+                .get()
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(Jsoup::parse)
+                .map(CompetitionClient::extractDetail);
+    }
 
+    static CompetitionDetail extractDetail(Document document) {
+        Element generalInformationFieldset = document.getElementsByTag("fieldset").first();
+
+        CompetitionDetail.Builder detailBuilder = CompetitionDetail.newBuilder();
+        extractInformation(generalInformationFieldset, "Date")
+                .map(dateStr -> LocalDate.parse(dateStr ,DETAIL_FORMATTER))
+                .flatMap(date -> extractInformation(generalInformationFieldset, "Heure d'accueil")
+                        .map(String::toUpperCase)
+                        .map(startTime -> startTime.split("H"))
+                        .map(splittedStartTime -> date.atTime(
+                                Integer.parseInt(splittedStartTime[0]),
+                                Integer.parseInt(splittedStartTime[1])
+                            )
+                        ))
+                .ifPresent(detailBuilder::withStartTime);
+
+        extractInformation(generalInformationFieldset, "commune").ifPresent(detailBuilder::withMunicipality);
+        extractInformation(generalInformationFieldset, "lieu").ifPresent(detailBuilder::withPlace);
+        extractInformation(generalInformationFieldset, "Nombre de places")
+                .map(Integer::valueOf)
+                .ifPresent(detailBuilder::withPlaceCount);
+
+        return detailBuilder.build();
+    }
+
+    static Optional<String> extractInformation(Element fieldset, String label) {
+        String search = label.toUpperCase() + " :";
+        return fieldset.getElementsByTag("p")
+            .stream()
+            .map(Element::text)
+            .filter(strContent -> strContent.toUpperCase().contains(search))
+            .findAny()
+            .map(strContent -> strContent.split(":")[1])
+            .map(String::trim);
     }
 }

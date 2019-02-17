@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.RouterFunction;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -22,6 +21,11 @@ public class Routes {
 
     @Bean
     public RouterFunction<?> routerFunction() {
-        return route(GET("/api/competitions").and(accept(MediaType.APPLICATION_JSON)), handler::handleCompetitonsRequest);
+        return route()
+                .GET("/api/competitions", accept(MediaType.APPLICATION_JSON), handler::getCompetitions)
+                .GET("/api/competitions/{id}", accept(MediaType.APPLICATION_JSON), handler::getCompetition)
+                .build();
     }
+
+
 }

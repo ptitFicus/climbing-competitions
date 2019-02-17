@@ -8,12 +8,14 @@ public class Competition {
     public final LocalDate startDate;
     public final LocalDate endDate;
     public final Set<Category> categories;
+    public final String id;
 
     private Competition(Builder builder) {
         name = builder.name;
         startDate = builder.startDate;
         endDate = builder.endDate;
         categories = builder.categories;
+        id = builder.id;
     }
 
     public static Builder newBuilder() {
@@ -26,11 +28,12 @@ public class Competition {
         builder.startDate = copy.startDate;
         builder.endDate = copy.endDate;
         builder.categories = copy.categories;
+        builder.id = copy.id;
         return builder;
     }
 
 
-    public static enum Category {
+    public enum Category {
         INF8ANS,
         MICROBE,
         POUSSIN,
@@ -48,6 +51,7 @@ public class Competition {
         private LocalDate startDate;
         private LocalDate endDate;
         private Set<Category> categories;
+        private String id;
 
         private Builder() {
         }
@@ -69,6 +73,11 @@ public class Competition {
 
         public Builder withCategories(Set<Category> val) {
             categories = val;
+            return this;
+        }
+
+        public Builder withId(String val) {
+            id = val;
             return this;
         }
 
