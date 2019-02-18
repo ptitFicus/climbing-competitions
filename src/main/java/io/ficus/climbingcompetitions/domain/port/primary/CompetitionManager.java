@@ -44,6 +44,12 @@ public class CompetitionManager {
     }
 
     public Mono<CompetitionDetail> findDetail(String id) {
-        return CompetitionClient.getDetail(id);
+        return store.findDetail(id)
+                .map(Mono::just)
+                .orElseGet(() -> {
+                    Mono<CompetitionDetail> detail = CompetitionClient.getDetail(id);
+                    detail.subscribe(store::saveDetail);
+                    return detail;
+                });
     }
 }

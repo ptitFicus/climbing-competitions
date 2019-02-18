@@ -9,7 +9,8 @@ public class CompetitionDetail {
     public final String place;
     public final Integer placeCount;
     public final String detail;
-    public final LocalDate inscriptionLimit;
+    public final LocalDate inscriptionDeadline;
+    public final String id;
 
     private CompetitionDetail(Builder builder) {
         startTime = builder.startTime;
@@ -17,11 +18,16 @@ public class CompetitionDetail {
         place = builder.place;
         placeCount = builder.placeCount;
         detail = builder.detail;
-        inscriptionLimit = builder.inscriptionLimit;
+        inscriptionDeadline = builder.inscriptionDeadline;
+        id = builder.id;
     }
 
     public static Builder newBuilder() {
         return new Builder();
+    }
+
+    public Builder copy() {
+        return newBuilder(this);
     }
 
     public static Builder newBuilder(CompetitionDetail copy) {
@@ -31,7 +37,8 @@ public class CompetitionDetail {
         builder.place = copy.place;
         builder.placeCount = copy.placeCount;
         builder.detail = copy.detail;
-        builder.inscriptionLimit = copy.inscriptionLimit;
+        builder.inscriptionDeadline = copy.inscriptionDeadline;
+        builder.id = copy.id;
         return builder;
     }
 
@@ -42,7 +49,8 @@ public class CompetitionDetail {
         private String place;
         private Integer placeCount;
         private String detail;
-        private LocalDate inscriptionLimit;
+        private LocalDate inscriptionDeadline;
+        private String id;
 
         private Builder() {
         }
@@ -72,8 +80,13 @@ public class CompetitionDetail {
             return this;
         }
 
-        public Builder withInscriptionLimit(LocalDate val) {
-            inscriptionLimit = val;
+        public Builder withInscriptionDeadline(LocalDate val) {
+            inscriptionDeadline = val;
+            return this;
+        }
+
+        public Builder withId(String val) {
+            id = val;
             return this;
         }
 

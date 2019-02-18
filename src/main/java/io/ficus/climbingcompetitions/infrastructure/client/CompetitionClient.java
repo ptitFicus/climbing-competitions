@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -120,12 +119,15 @@ public class CompetitionClient {
     }
 
     public static Mono<CompetitionDetail> getDetail(String id) {
-        return WebClient.create("https://www.ffme.fr/competition/fiche/" + id + ".html")
+        String url = "https://www.ffme.fr/competition/fiche/" + id + ".html";
+        LOGGER.info("Calling {}", url);
+        return WebClient.create(url)
                 .get()
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(Jsoup::parse)
-                .map(CompetitionClient::extractDetail);
+                .map(CompetitionClient::extractDetail)
+                .map(detail -> detail.copy().withId(id).build());
     }
 
     static CompetitionDetail extractDetail(Document document) {
@@ -166,9 +168,10 @@ public class CompetitionClient {
                 .findAny()
                 .flatMap(fieldset ->extractInformation(fieldset, "Date limite d'inscription"))
                 .map(dateStr -> LocalDate.parse(dateStr, DETAIL_FORMATTER))
-                .ifPresent(detailBuilder::withInscriptionLimit);
+                .ifPresent(detailBuilder::withInscriptionDeadline);
 
-        return detailBuilder.build();
+        return detailBuilder
+                .build();
     }
 
     static Optional<String> extractInformation(Element fieldset, String label) {

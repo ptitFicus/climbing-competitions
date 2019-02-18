@@ -1,19 +1,19 @@
 package io.ficus.climbingcompetitions.infrastructure.adapter.secondary;
 
 import io.ficus.climbingcompetitions.domain.model.Competition;
+import io.ficus.climbingcompetitions.domain.model.CompetitionDetail;
 import io.ficus.climbingcompetitions.domain.port.secondary.CompetitionStore;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
 public class InMemoryCompetitionStore implements CompetitionStore {
     private List<Competition> competitions = new ArrayList<>();
+    private Map<String, CompetitionDetail> details = new HashMap<>();
 
     @Override
     public void saveCompetitions(List<Competition> competitions) {
@@ -23,6 +23,16 @@ public class InMemoryCompetitionStore implements CompetitionStore {
     @Override
     public void clear() {
         competitions.clear();
+    }
+
+    @Override
+    public void saveDetail(CompetitionDetail detail) {
+        details.put(detail.id, detail);
+    }
+
+    @Override
+    public Optional<CompetitionDetail> findDetail(String id) {
+        return Optional.ofNullable(details.get(id));
     }
 
     @Override
