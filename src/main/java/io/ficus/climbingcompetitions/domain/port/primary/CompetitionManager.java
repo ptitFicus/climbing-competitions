@@ -24,15 +24,16 @@ public class CompetitionManager {
         this.store = store;
     }
 
-    @PostConstruct
     @Scheduled(fixedRate = 3600000)
     public void init() {
         reloadCompetitions();
     }
 
     public Disposable reloadCompetitions() {
-        store.clear();
-        return client.getCompetitions().collectList().subscribe(store::saveCompetitions);
+        return client.getCompetitions().collectList().subscribe(competitions -> {
+            store.clear();
+            store.saveCompetitions(competitions);
+        });
     }
 
     public Flux<Competition> findCompetitions(

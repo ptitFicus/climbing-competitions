@@ -39,7 +39,10 @@ public class CompetitionClient {
     );
 
     public Flux<Competition> getCompetitions() {
-        return WebClient.create("https://www.ffme.fr/competition/calendrier-liste.html?DISCIPLINE=ESC&CPT_FUTUR=1")
+        System.out.println("getCompetitions");
+        String url = "https://www.ffme.fr/competition/calendrier-liste.html?DISCIPLINE=ESC&CPT_FUTUR=1";
+        LOGGER.info("Fetching {}", url);
+        return WebClient.create(url)
                 .get()
                 .retrieve()
                 .bodyToMono(String.class)
@@ -54,7 +57,7 @@ public class CompetitionClient {
         return Flux.range(2, count-1)
                 .flatMap(index -> {
                     String url = "https://www.ffme.fr/competition/calendrier-liste.html?DISCIPLINE=ESC&CPT_FUTUR=1&page=" + index;
-                    LOGGER.debug("Fetching {}", url);
+                    LOGGER.info("Fetching {}", url);
                     return WebClient.create(url)
                             .get()
                             .retrieve()
@@ -70,7 +73,7 @@ public class CompetitionClient {
     private Collection<Competition> extractCompetitions(Document document) {
         Elements trs = document.select(".infos_colonne tr");
 
-        return StreamSupport.stream(trs.spliterator(), true)
+        return trs.stream()
                 .map(this::extractCompetitionFromTr)
                 .collect(Collectors.toList());
     }
