@@ -137,6 +137,13 @@ public class CompetitionClient {
                 .flatMap(date -> extractInformation(generalInformationFieldset, "Heure d'accueil")
                         .map(String::toUpperCase)
                         .map(startTime -> startTime.split("H"))
+                        .map(splitted -> {
+                            if(splitted.length < 2) {
+                                return new String[]{splitted[0], "00"};
+                            }
+
+                            return splitted;
+                        })
                         .map(splittedStartTime -> date.atTime(
                                 Integer.parseInt(splittedStartTime[0]),
                                 Integer.parseInt(splittedStartTime[1])
@@ -149,6 +156,17 @@ public class CompetitionClient {
         extractInformation(generalInformationFieldset, "Nombre de places")
                 .map(Integer::valueOf)
                 .ifPresent(detailBuilder::withPlaceCount);
+
+        document.getElementsByTag("fieldset")
+                .stream()
+                .filter(fieldset -> {
+                    Element element = fieldset.getElementsByTag("legend").first();
+                    return element.text().toUpperCase().contains("INSCRIPTION");
+                })
+                .findAny()
+                .flatMap(fieldset ->extractInformation(fieldset, "Date limite d'inscription"))
+                .map(dateStr -> LocalDate.parse(dateStr, DETAIL_FORMATTER))
+                .ifPresent(detailBuilder::withInscriptionLimit);
 
         return detailBuilder.build();
     }

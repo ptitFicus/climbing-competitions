@@ -1,5 +1,6 @@
 package io.ficus.climbingcompetitions.domain.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class CompetitionDetail {
@@ -8,6 +9,7 @@ public class CompetitionDetail {
     public final String place;
     public final Integer placeCount;
     public final String detail;
+    public final LocalDate inscriptionLimit;
 
     private CompetitionDetail(Builder builder) {
         startTime = builder.startTime;
@@ -15,6 +17,7 @@ public class CompetitionDetail {
         place = builder.place;
         placeCount = builder.placeCount;
         detail = builder.detail;
+        inscriptionLimit = builder.inscriptionLimit;
     }
 
     public static Builder newBuilder() {
@@ -28,6 +31,7 @@ public class CompetitionDetail {
         builder.place = copy.place;
         builder.placeCount = copy.placeCount;
         builder.detail = copy.detail;
+        builder.inscriptionLimit = copy.inscriptionLimit;
         return builder;
     }
 
@@ -38,6 +42,7 @@ public class CompetitionDetail {
         private String place;
         private Integer placeCount;
         private String detail;
+        private LocalDate inscriptionLimit;
 
         private Builder() {
         }
@@ -64,6 +69,11 @@ public class CompetitionDetail {
 
         public Builder withDetail(String val) {
             detail = val;
+            return this;
+        }
+
+        public Builder withInscriptionLimit(LocalDate val) {
+            inscriptionLimit = val;
             return this;
         }
 
